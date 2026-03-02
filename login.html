@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -55,6 +54,9 @@
 </div>
 
 <script>
+function getUsers(){return JSON.parse(localStorage.getItem('users')||'[]')}
+function setCurrentUser(u){localStorage.setItem('currentUser',JSON.stringify(u))}
+
 document.getElementById('togglePass').addEventListener('click', function(){
     const input = document.getElementById('password');
     const shown = input.type === 'text';
@@ -73,29 +75,31 @@ document.getElementById('loginForm').addEventListener('submit', function(e){
     passErr.style.display = 'none';
     serverMsg.style.display = 'none';
 
-    const emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.value.trim());
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
     const passValid = pass.value.trim().length >= 6;
 
     if(!emailValid) emailErr.style.display = 'block';
     if(!passValid) passErr.style.display = 'block';
     if(!emailValid || !passValid) return;
 
-    // Simula envio; substitua por fetch() para integrar com o backend.
+    // Autenticação localStorage
+    const users = getUsers();
+    const user = users.find(u=>u.email===email.value.trim().toLowerCase() && u.password===pass.value);
+    if(!user){
+        serverMsg.style.display = 'block';
+        serverMsg.style.color = '#b91c1c';
+        serverMsg.textContent = 'E-mail ou senha inválidos.';
+        return;
+    }
+    setCurrentUser({ name: user.name, email: user.email, role: user.role });
     serverMsg.style.display = 'block';
     serverMsg.style.color = '#0f5132';
-    serverMsg.textContent = 'Fazendo login...';
-
-    setTimeout(()=> {
-        // Exemplo de sucesso
-        serverMsg.style.color = '#0f5132';
-        serverMsg.textContent = 'Login realizado. Redirecionando...';
-        // window.location.href = '/dashboard';
-    }, 1000);
+    serverMsg.textContent = 'Login realizado. Redirecionando...';
+    setTimeout(()=>{ window.location.href = 'agenda.html'; }, 900);
 });
 
 document.getElementById('createAccount').addEventListener('click', function(){
-    // ajuste para sua rota de criação de conta
-    window.location.href = '/register';
+    window.location.href = 'cadastro.html';
 });
 </script>
 

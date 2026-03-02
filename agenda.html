@@ -407,7 +407,10 @@
                     <li><a href="#inicio">Início</a></li>
                     <li><a href="#servicos">Serviços</a></li>
                     <li><a href="#agendamento">Agendamento</a></li>
+                    <li><a href="#acompanhamento">Acompanhamento</a></li>
                     <li><a href="#contato">Contato</a></li>
+                    <li><a href="login.html" id="link-login">Login</a></li>
+                    <li><a href="cadastro.html">Cadastro</a></li>
                 </ul>
             </nav>
         </div>
@@ -553,6 +556,16 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label for="cabeleireiro">Escolha o(a) cabeleireiro(a)</label>
+                            <select id="cabeleireiro" class="form-control" required>
+                                <option value="">Selecione um profissional</option>
+                                <option value="ana@salon.com">Ana Paula - Escova, Progressiva</option>
+                                <option value="bruna@salon.com">Bruna Silva - Manicure, Pedicure</option>
+                                <option value="carla@salon.com">Carla Souza - Hidratação, Lavagem</option>
+                                <option value="daniela@salon.com">Daniela Lima - Sobrancelha, Cílios</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label for="data">Data desejada</label>
                             <input type="date" id="data" class="form-control" required>
                         </div>
@@ -568,11 +581,21 @@
 
                 <div class="horarios-disponiveis">
                     <h3 class="horarios-title">Horários Disponíveis</h3>
-                    <p>Selecione um horário disponível para o dia escolhido. Os horários em cinza estão indisponíveis.</p>
+                    <p id="horarios-info">Selecione um cabeleireiro e uma data para ver horários disponíveis. Os horários em cinza estão indisponíveis.</p>
                     <div class="horarios-grid" id="horarios-disponiveis">
                         <!-- Horários serão gerados dinamicamente via JavaScript -->
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Acompanhamento do Cliente/Cabeleireiro -->
+    <section class="agendamento" id="acompanhamento">
+        <div class="container">
+            <h2 class="section-title">Acompanhamento</h2>
+            <div id="acompanhamento-container">
+                <p>Faça login para ver seus agendamentos.</p>
             </div>
         </div>
     </section>
@@ -611,79 +634,120 @@
     </footer>
 
     <script>
-        // Gerar horários disponíveis
+        // --- Helpers de storage para usuários, agendamentos e sessão ---
+        function getUsers() { return JSON.parse(localStorage.getItem('users') || '[]'); }
+        function saveUser(u) { const arr = getUsers(); arr.push(u); localStorage.setItem('users', JSON.stringify(arr)); }
+        function getAppointments() { return JSON.parse(localStorage.getItem('appointments') || '[]'); }
+        function saveAppointment(a) { const arr = getAppointments(); arr.push(a); localStorage.setItem('appointments', JSON.stringify(arr)); }
+        function setCurrentUser(u) { localStorage.setItem('currentUser', JSON.stringify(u)); }
+        function getCurrentUser() { return JSON.parse(localStorage.getItem('currentUser') || 'null'); }
+        function logout() { localStorage.removeItem('currentUser'); location.reload(); }
+
+        function updateHeaderForUser() {
+            const user = getCurrentUser();
+            const linkLogin = document.getElementById('link-login');
+            if (!linkLogin) return;
+            if (user) {
+                linkLogin.textContent = 'Sair';
+                linkLogin.href = '#';
+                linkLogin.addEventListener('click', function(e){ e.preventDefault(); logout(); });
+            }
+        }
+
+        function populateCabeleireiros() { /* agora fixo no HTML */ }
+
+        // Gerar horários considerando reservas do cabeleireiro e data escolhida
         function gerarHorarios() {
             const horariosDisponiveis = document.getElementById('horarios-disponiveis');
             const horariosForm = document.getElementById('horarios-container');
-            const horarios = [
-                '08:00', '09:00', '10:00', '11:00', 
-                '12:00', '13:00', '14:00', '15:00', 
-                '16:00', '17:00', '18:00', '19:00'
-            ];
-            
-            // Limpar containers
-            horariosDisponiveis.innerHTML = '';
-            horariosForm.innerHTML = '';
-            
-            // Gerar horários para a seção de disponíveis
+            const selectCabel = document.getElementById('cabeleireiro');
+            const dataInput = document.getElementById('data');
+            const horarios = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+
+            horariosDisponiveis.innerHTML = ''; horariosForm.innerHTML = '';
+            const stylist = selectCabel ? selectCabel.value : '';
+            const date = dataInput ? dataInput.value : '';
+            const appointments = getAppointments();
+            const booked = appointments.filter(a => a.stylistEmail === stylist && a.date === date).map(a => a.time);
+
             horarios.forEach(horario => {
-                // 30% de chance de estar indisponível
-                const disponivel = Math.random() > 0.3;
-                
+                let disponivel = true;
+                if (!stylist || !date) disponivel = false;
+                if (booked.includes(horario)) disponivel = false;
+
                 const horarioBtn = document.createElement('div');
                 horarioBtn.className = `horario-btn ${disponivel ? '' : 'indisponivel'}`;
-                horarioBtn.textContent = horario;
-                horarioBtn.style.opacity = disponivel ? '1' : '0.5';
-                horarioBtn.style.cursor = disponivel ? 'pointer' : 'not-allowed';
-                
-                if (disponivel) {
-                    horarioBtn.addEventListener('click', function() {
-                        // Remover seleção de todos os botões
-                        document.querySelectorAll('.horario-btn').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        // Selecionar este botão
-                        this.classList.add('selected');
-                        
-                        // Selecionar também no formulário
-                        const horarioFormBtn = document.querySelector(`#horarios-container .horario-btn[data-horario="${horario}"]`);
-                        if (horarioFormBtn) {
-                            horarioFormBtn.classList.add('selected');
-                        }
-                    });
-                }
-                
+                horarioBtn.textContent = horario; horarioBtn.style.opacity = disponivel ? '1' : '0.5'; horarioBtn.style.cursor = disponivel ? 'pointer' : 'not-allowed';
+                if (disponivel) horarioBtn.addEventListener('click', function(){ document.querySelectorAll('.horario-btn').forEach(b=>b.classList.remove('selected')); this.classList.add('selected'); const f = document.querySelector(`#horarios-container .horario-btn[data-horario="${horario}"]`); if (f) f.classList.add('selected'); });
                 horariosDisponiveis.appendChild(horarioBtn);
-                
-                // Gerar horários para o formulário
-                const horarioFormBtn = document.createElement('div');
-                horarioFormBtn.className = `horario-btn ${disponivel ? '' : 'indisponivel'}`;
-                horarioFormBtn.textContent = horario;
-                horarioFormBtn.setAttribute('data-horario', horario);
-                horarioFormBtn.style.opacity = disponivel ? '1' : '0.5';
-                horarioFormBtn.style.cursor = disponivel ? 'pointer' : 'not-allowed';
-                
-                if (disponivel) {
-                    horarioFormBtn.addEventListener('click', function() {
-                        // Remover seleção de todos os botões
-                        document.querySelectorAll('#horarios-container .horario-btn').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        // Selecionar este botão
-                        this.classList.add('selected');
-                        
-                        // Selecionar também na seção de disponíveis
-                        const horarioDisponivelBtn = document.querySelector(`#horarios-disponiveis .horario-btn:not(.indisponivel):contains("${horario}")`);
-                        if (horarioDisponivelBtn) {
-                            horarioDisponivelBtn.classList.add('selected');
-                        }
-                    });
-                }
-                
+
+                const horarioFormBtn = document.createElement('div'); horarioFormBtn.className = `horario-btn ${disponivel ? '' : 'indisponivel'}`; horarioFormBtn.textContent = horario; horarioFormBtn.setAttribute('data-horario', horario); horarioFormBtn.style.opacity = disponivel ? '1' : '0.5'; horarioFormBtn.style.cursor = disponivel ? 'pointer' : 'not-allowed';
+                if (disponivel) horarioFormBtn.addEventListener('click', function(){ document.querySelectorAll('#horarios-container .horario-btn').forEach(b=>b.classList.remove('selected')); this.classList.add('selected'); const d = Array.from(document.querySelectorAll('#horarios-disponiveis .horario-btn')).find(b=>b.textContent===horario); if (d) d.classList.add('selected'); });
                 horariosForm.appendChild(horarioFormBtn);
             });
         }
-        
+
+        function renderAcompanhamento() {
+            const container = document.getElementById('acompanhamento-container');
+            const user = getCurrentUser();
+            if (!container) return;
+            if (!user) { container.innerHTML = '<p>Faça login para ver seus agendamentos. <a href="login.html">Entrar</a></p>'; return; }
+            if (user.role === 'cliente') {
+                const appts = getAppointments().filter(a => a.clientEmail === user.email);
+                if (appts.length === 0) { container.innerHTML = '<p>Você não possui agendamentos.</p>'; return; }
+                const list = document.createElement('div');
+                appts.forEach(a=>{
+                    const el = document.createElement('div');
+                    el.className='servico-card';
+                    el.innerHTML = `
+                        <h3>${a.service}</h3>
+                        <p><strong>Data:</strong> ${new Date(a.date).toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Horário:</strong> ${a.time}</p>
+                        <p><strong>Profissional:</strong> ${a.stylistName || a.stylistEmail}</p>
+                        <p><strong>Local:</strong> Rua das Flores, 123 - Centro</p>
+                        <p><strong>Telefone para contato:</strong> (11) 3456-7890</p>
+                    `;
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className='btn';
+                    cancelBtn.style.marginTop='10px';
+                    cancelBtn.textContent='Cancelar';
+                    cancelBtn.addEventListener('click', function(){
+                        if(!confirm('Deseja cancelar este agendamento?')) return;
+                        const remaining = getAppointments().filter(x=>!(x.clientEmail===a.clientEmail && x.date===a.date && x.time===a.time && x.stylistEmail===a.stylistEmail));
+                        localStorage.setItem('appointments', JSON.stringify(remaining));
+                        renderAcompanhamento();
+                        gerarHorarios();
+                    });
+                    el.appendChild(cancelBtn);
+                    list.appendChild(el);
+                });
+                container.innerHTML='';
+                container.appendChild(list);
+                return;
+            }
+            if (user.role === 'cabeleireiro') {
+                const appts = getAppointments().filter(a => a.stylistEmail === user.email);
+                if (appts.length === 0) { container.innerHTML = '<p>Você não possui agendamentos.</p>'; return; }
+                const list = document.createElement('div');
+                appts.forEach(a=>{
+                    const el = document.createElement('div');
+                    el.className='servico-card';
+                    el.innerHTML = `
+                        <h3>${a.service}</h3>
+                        <p><strong>Cliente:</strong> ${a.clientName}</p>
+                        <p><strong>Data:</strong> ${new Date(a.date).toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Horário:</strong> ${a.time}</p>
+                        <p><strong>Local:</strong> Rua das Flores, 123 - Centro</p>
+                        <p><strong>Telefone para contato:</strong> (11) 3456-7890</p>
+                    `;
+                    list.appendChild(el);
+                });
+                container.innerHTML='';
+                container.appendChild(list);
+                return;
+            }
+        }
+
         // Formatar a data mínima para hoje
         document.addEventListener('DOMContentLoaded', function() {
             // Definir data mínima para hoje
@@ -694,8 +758,11 @@
             const dataMinima = yyyy + '-' + mm + '-' + dd;
             document.getElementById('data').setAttribute('min', dataMinima);
             
-            // Gerar horários iniciais
+            // Inicializações
+            populateCabeleireiros();
+            updateHeaderForUser();
             gerarHorarios();
+            renderAcompanhamento();
             
             // Formatar telefone
             const telefoneInput = document.getElementById('telefone');
@@ -721,32 +788,30 @@
                 
                 // Verificar se um horário foi selecionado
                 const horarioSelecionado = document.querySelector('#horarios-container .horario-btn.selected');
-                if (!horarioSelecionado) {
-                    alert('Por favor, selecione um horário disponível.');
-                    return;
-                }
+                if (!horarioSelecionado) { alert('Por favor, selecione um horário disponível.'); return; }
+                const user = getCurrentUser(); if (!user || user.role !== 'cliente') { alert('Você precisa entrar como cliente para confirmar o agendamento.'); window.location.href='login.html'; return; }
                 
                 // Obter dados do formulário
                 const nome = document.getElementById('nome').value;
                 const servico = document.getElementById('servico').options[document.getElementById('servico').selectedIndex].text;
                 const data = document.getElementById('data').value;
                 const horario = horarioSelecionado.textContent;
+                const stylistEmail = document.getElementById('cabeleireiro').value;
+                const stylistName = document.getElementById('cabeleireiro').selectedOptions[0] ? document.getElementById('cabeleireiro').selectedOptions[0].text : '';
+                const client = getCurrentUser();
                 
                 // Formatar a data para exibição
                 const dataObj = new Date(data);
                 const dataFormatada = dataObj.toLocaleDateString('pt-BR');
                 
-                // Exibir mensagem de sucesso
-                alert(`Agendamento confirmado!\n\nCliente: ${nome}\nServiço: ${servico}\nData: ${dataFormatada}\nHorário: ${horario}\n\nEm breve entraremos em contato para confirmar.`);
-                
+                // salvar appointment
+                const appt = { id: Date.now(), clientEmail: client.email, clientName: client.name, stylistEmail: stylistEmail, stylistName: stylistName, service: servico, date: data, time: horario };
+                saveAppointment(appt);
+                alert(`Agendamento confirmado!\n\nCliente: ${client.name}\nServiço: ${servico}\nData: ${dataFormatada}\nHorário: ${horario}\n\nEm breve entraremos em contato para confirmar.`);
                 // Limpar formulário
-                document.getElementById('form-agendamento').reset();
-                document.querySelectorAll('.horario-btn.selected').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-                
-                // Gerar novos horários (simulando atualização)
-                setTimeout(gerarHorarios, 500);
+                document.getElementById('form-agendamento').reset(); document.querySelectorAll('.horario-btn.selected').forEach(btn=>btn.classList.remove('selected'));
+                // Atualizar
+                setTimeout(function(){ gerarHorarios(); renderAcompanhamento(); }, 500);
             });
             
             // Atualizar horários quando a data for alterada
@@ -754,6 +819,9 @@
                 // Simular carregamento de horários para a nova data
                 setTimeout(gerarHorarios, 300);
             });
+
+            // Atualizar horários ao escolher cabeleireiro
+            const sel = document.getElementById('cabeleireiro'); if (sel) sel.addEventListener('change', function(){ gerarHorarios(); });
         });
     </script>
 </body>
