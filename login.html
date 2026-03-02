@@ -1,107 +1,156 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Login</title>
+    <title>Login - Agenda das Girls</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(180deg, #FFD1DC 0%, #F8BBD0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(236,64,122,0.08);
+            padding: 2.5rem 2rem;
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .login-header i {
+            font-size: 2.2rem;
+            color: #EC407A;
+        }
+        .login-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #EC407A;
+        }
+        h2 {
+            color: #F48FB1;
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: .4rem;
+            font-weight: 600;
+            color: #EC407A;
+        }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: .8rem;
+            border-radius: 6px;
+            border: 2px solid #F8BBD0;
+            font-size: 1rem;
+        }
+        input:focus {
+            border-color: #EC407A;
+            outline: none;
+        }
+        .btn {
+            background: #EC407A;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: .8rem 1.2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: .5rem;
+            transition: background .3s;
+        }
+        .btn:hover {
+            background: #F48FB1;
+        }
+        .links {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: .95rem;
+        }
+        .error {
+            color: #b91c1c;
+            font-size: .95rem;
+            margin-top: .3rem;
+        }
+    </style>
 </head>
-
 <body>
-<div class="card" role="main" aria-labelledby="login-title">
-    <div class="brand" aria-hidden="true">
-        <div class="logo">AG</div>
-        <div>
-            <div style="font-weight:700">Agenda das Girls</div>
-            <div style="font-size:12px;color:gray">Gerencie seus compromissos</div>
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-spa"></i>
+            <h1>Agenda das <span style="color:#FFD1DC">Girls</span></h1>
         </div>
-    </div>
-
-    <h1 id="login-title">Entrar na sua conta</h1>
-    <p class="lead">Use seu e‑mail e senha para acessar o painel.</p>
-
-    <form id="loginForm" novalidate>
-        <div>
-            <label for="email">E-mail</label><br>
-            <input id="email" name="email" type="email" autocomplete="email" required placeholder="seu@exemplo.com">
-            <div id="emailError" class="error" style="display:none;color:#b91c1c">Insira um e‑mail válido.</div>
-        </div>
-
-        <div>
-            <label for="password">Senha</label><br>
-            <div>
-                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••">
-                <button type="button" class="show-pass" id="togglePass" aria-label="Mostrar senha">Mostrar</button>
+        <h2>Faça login para agendar seu horário</h2>
+        <form id="loginForm" novalidate>
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input id="email" name="email" type="email" autocomplete="email" required placeholder="seu@exemplo.com">
+                <div id="emailError" class="error" style="display:none">Insira um e‑mail válido.</div>
             </div>
-            <div id="passError" class="error" style="display:none;color:#b91c1c">A senha deve ter ao menos 6 caracteres.</div>
-        </div>
-
-        <div class="row">
-            <label>
-                <input type="checkbox" id="remember" name="remember"> Lembrar-me
-            </label>
-            <a href="#" class="muted-link">Esqueci a senha</a>
-        </div>
-
-        <div class="actions">
-            <button type="submit">Entrar</button>
-            <button type="button" class="secondary" id="createAccount">Criar conta</button>
-        </div>
-
-        <div id="serverMsg" class="error" role="alert" aria-live="polite" style="display:none"></div>
-    </form>
-
-    <footer>Ao continuar, você concorda com os termos de uso.</footer>
-</div>
-
-<script>
-function getUsers(){return JSON.parse(localStorage.getItem('users')||'[]')}
-function setCurrentUser(u){localStorage.setItem('currentUser',JSON.stringify(u))}
-
-document.getElementById('togglePass').addEventListener('click', function(){
-    const input = document.getElementById('password');
-    const shown = input.type === 'text';
-    input.type = shown ? 'password' : 'text';
-    this.textContent = shown ? 'Mostrar' : 'Ocultar';
-});
-
-document.getElementById('loginForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    const email = document.getElementById('email');
-    const pass = document.getElementById('password');
-    const emailErr = document.getElementById('emailError');
-    const passErr = document.getElementById('passError');
-    const serverMsg = document.getElementById('serverMsg');
-    emailErr.style.display = 'none';
-    passErr.style.display = 'none';
-    serverMsg.style.display = 'none';
-
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
-    const passValid = pass.value.trim().length >= 6;
-
-    if(!emailValid) emailErr.style.display = 'block';
-    if(!passValid) passErr.style.display = 'block';
-    if(!emailValid || !passValid) return;
-
-    // Autenticação localStorage
-    const users = getUsers();
-    const user = users.find(u=>u.email===email.value.trim().toLowerCase() && u.password===pass.value);
-    if(!user){
-        serverMsg.style.display = 'block';
-        serverMsg.style.color = '#b91c1c';
-        serverMsg.textContent = 'E-mail ou senha inválidos.';
-        return;
-    }
-    setCurrentUser({ name: user.name, email: user.email, role: user.role });
-    serverMsg.style.display = 'block';
-    serverMsg.style.color = '#0f5132';
-    serverMsg.textContent = 'Login realizado. Redirecionando...';
-    setTimeout(()=>{ window.location.href = 'agenda.html'; }, 900);
-});
-
-document.getElementById('createAccount').addEventListener('click', function(){
-    window.location.href = 'cadastro.html';
-});
-</script>
-
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" style="flex:1">
+                    <button type="button" class="btn" id="togglePass" style="width:auto;padding:.5rem 1rem;background:#F8BBD0;color:#EC407A;font-size:.95rem;">Mostrar</button>
+                </div>
+                <div id="passError" class="error" style="display:none">A senha deve ter ao menos 6 caracteres.</div>
+            </div>
+            <button class="btn" type="button" onclick="window.location.href='agenda.html'">Entrar</button>
+            <div class="links">
+                Não tem conta? <a href="cadastro.html" style="color:#EC407A;text-decoration:underline">Cadastre-se</a>
+            </div>
+            <div id="serverMsg" class="error" role="alert" aria-live="polite" style="display:none"></div>
+        </form>
+    </div>
+    <script>
+        function getUsers(){return JSON.parse(localStorage.getItem('users')||'[]')}
+        function setCurrentUser(u){localStorage.setItem('currentUser',JSON.stringify(u))}
+        document.getElementById('togglePass').addEventListener('click', function(){
+            const input = document.getElementById('password');
+            const shown = input.type === 'text';
+            input.type = shown ? 'password' : 'text';
+            this.textContent = shown ? 'Mostrar' : 'Ocultar';
+        });
+        document.getElementById('loginForm').addEventListener('submit', function(e){
+            e.preventDefault();
+            const email = document.getElementById('email');
+            const pass = document.getElementById('password');
+            const emailErr = document.getElementById('emailError');
+            const passErr = document.getElementById('passError');
+            const serverMsg = document.getElementById('serverMsg');
+            emailErr.style.display = 'none';
+            passErr.style.display = 'none';
+            serverMsg.style.display = 'none';
+            const emailValue = email.value.trim().toLowerCase();
+            const emailValid = /^[^\s@]+@gmail\.com$/.test(emailValue);
+            const passValid = pass.value.trim().length >= 6;
+            if(!emailValid) emailErr.style.display = 'block';
+            if(!passValid) passErr.style.display = 'block';
+            if(!emailValid || !passValid) return;
+            // Salva dados mínimos do usuário no localStorage
+            const user = { name: emailValue.split('@')[0], email: emailValue, role: 'cliente' };
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            serverMsg.style.display = 'block';
+            serverMsg.style.color = '#0f5132';
+            serverMsg.textContent = 'Login realizado. Redirecionando...';
+            setTimeout(()=>{ window.location.href = 'agenda.html'; }, 900);
+        });
+    </script>
 </body>
 </html>

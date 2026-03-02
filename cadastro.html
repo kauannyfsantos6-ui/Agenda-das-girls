@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Agenda das Girls - Cadastro</title>
+    <meta http-equiv="refresh" content="0; url=cadastro.html">
+    <script>
+        // Redireciona para cadastro se não houver usuário autenticado
+        if (!localStorage.getItem('currentUser')) {
+            if (window.location.pathname.indexOf('cadastro.html') === -1) {
+                window.location.href = 'cadastro.html';
+            }
+        }
+    </script>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;

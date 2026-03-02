@@ -407,7 +407,6 @@
                     <li><a href="#inicio">Início</a></li>
                     <li><a href="#servicos">Serviços</a></li>
                     <li><a href="#agendamento">Agendamento</a></li>
-                    <li><a href="#acompanhamento">Acompanhamento</a></li>
                     <li><a href="#contato">Contato</a></li>
                     <li><a href="login.html" id="link-login">Login</a></li>
                     <li><a href="cadastro.html">Cadastro</a></li>
@@ -578,7 +577,17 @@
                         <button type="submit" class="btn" style="width: 100%;">Confirmar Agendamento</button>
                     </form>
                 </div>
-
+                <!-- Mensagem de confirmação após agendamento -->
+                <div id="mensagem-confirmacao" style="display:none; background: var(--rosa-claro); color: var(--rosa-escuro2); padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 2rem; font-size: 1.2rem;">
+                    Seu agendamento foi realizado com sucesso! Você pode acompanhar ou cancelar seu agendamento na página <a href="acompanhamento.html" style="color: var(--rosa-escuro2); text-decoration: underline; font-weight: bold;">Acompanhamento</a>.
+                </div>
+                <script>
+                    // Exibe mensagem de confirmação se veio de um agendamento
+                    if (window.location.search.includes('agendado=1')) {
+                        var msg = document.getElementById('mensagem-confirmacao');
+                        if (msg) msg.style.display = 'block';
+                    }
+                </script>
                 <div class="horarios-disponiveis">
                     <h3 class="horarios-title">Horários Disponíveis</h3>
                     <p id="horarios-info">Selecione um cabeleireiro e uma data para ver horários disponíveis. Os horários em cinza estão indisponíveis.</p>
@@ -589,17 +598,34 @@
             </div>
         </div>
     </section>
-
-    <!-- Acompanhamento do Cliente/Cabeleireiro -->
-    <section class="agendamento" id="acompanhamento">
-        <div class="container">
-            <h2 class="section-title">Acompanhamento</h2>
-            <div id="acompanhamento-container">
-                <p>Faça login para ver seus agendamentos.</p>
-            </div>
-        </div>
-    </section>
-
+    <script></script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sobrescreve o submit do formulário para redirecionar após agendar e não exigir login
+        document.getElementById('form-agendamento').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Verificar se um horário foi selecionado
+            const horarioSelecionado = document.querySelector('#horarios-container .horario-btn.selected');
+            if (!horarioSelecionado) { alert('Por favor, selecione um horário disponível.'); return; }
+            const user = getCurrentUser(); if (!user || user.role !== 'cliente') { alert('Você precisa entrar como cliente para confirmar o agendamento.'); window.location.href='login.html'; return; }
+            // Obter dados do formulário
+            const nome = document.getElementById('nome').value;
+            const telefone = document.getElementById('telefone').value;
+            const email = document.getElementById('email').value;
+            const servico = document.getElementById('servico').options[document.getElementById('servico').selectedIndex].text;
+            const data = document.getElementById('data').value;
+            const horario = horarioSelecionado.textContent;
+            const stylistEmail = document.getElementById('cabeleireiro').value;
+            const stylistName = document.getElementById('cabeleireiro').selectedOptions[0] ? document.getElementById('cabeleireiro').selectedOptions[0].text : '';
+            const client = getCurrentUser();
+            // salvar appointment
+            const appt = { id: Date.now(), clientEmail: client.email, clientName: client.name, stylistEmail: stylistEmail, stylistName: stylistName, service: servico, date: data, time: horario, telefone: telefone };
+            saveAppointment(appt);
+            localStorage.setItem('lastAppointment', JSON.stringify(appt)); // Salva o último agendamento para confirmação
+            // Redirecionar para confirmacao.html
+            window.location.href = 'confirmacao.html';
+        }, true);
+    });
+    </script>
     <!-- Footer -->
     <footer id="contato">
         <div class="container">
@@ -687,67 +713,6 @@
             });
         }
 
-        function renderAcompanhamento() {
-            const container = document.getElementById('acompanhamento-container');
-            const user = getCurrentUser();
-            if (!container) return;
-            if (!user) { container.innerHTML = '<p>Faça login para ver seus agendamentos. <a href="login.html">Entrar</a></p>'; return; }
-            if (user.role === 'cliente') {
-                const appts = getAppointments().filter(a => a.clientEmail === user.email);
-                if (appts.length === 0) { container.innerHTML = '<p>Você não possui agendamentos.</p>'; return; }
-                const list = document.createElement('div');
-                appts.forEach(a=>{
-                    const el = document.createElement('div');
-                    el.className='servico-card';
-                    el.innerHTML = `
-                        <h3>${a.service}</h3>
-                        <p><strong>Data:</strong> ${new Date(a.date).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Horário:</strong> ${a.time}</p>
-                        <p><strong>Profissional:</strong> ${a.stylistName || a.stylistEmail}</p>
-                        <p><strong>Local:</strong> Rua das Flores, 123 - Centro</p>
-                        <p><strong>Telefone para contato:</strong> (11) 3456-7890</p>
-                    `;
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.className='btn';
-                    cancelBtn.style.marginTop='10px';
-                    cancelBtn.textContent='Cancelar';
-                    cancelBtn.addEventListener('click', function(){
-                        if(!confirm('Deseja cancelar este agendamento?')) return;
-                        const remaining = getAppointments().filter(x=>!(x.clientEmail===a.clientEmail && x.date===a.date && x.time===a.time && x.stylistEmail===a.stylistEmail));
-                        localStorage.setItem('appointments', JSON.stringify(remaining));
-                        renderAcompanhamento();
-                        gerarHorarios();
-                    });
-                    el.appendChild(cancelBtn);
-                    list.appendChild(el);
-                });
-                container.innerHTML='';
-                container.appendChild(list);
-                return;
-            }
-            if (user.role === 'cabeleireiro') {
-                const appts = getAppointments().filter(a => a.stylistEmail === user.email);
-                if (appts.length === 0) { container.innerHTML = '<p>Você não possui agendamentos.</p>'; return; }
-                const list = document.createElement('div');
-                appts.forEach(a=>{
-                    const el = document.createElement('div');
-                    el.className='servico-card';
-                    el.innerHTML = `
-                        <h3>${a.service}</h3>
-                        <p><strong>Cliente:</strong> ${a.clientName}</p>
-                        <p><strong>Data:</strong> ${new Date(a.date).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Horário:</strong> ${a.time}</p>
-                        <p><strong>Local:</strong> Rua das Flores, 123 - Centro</p>
-                        <p><strong>Telefone para contato:</strong> (11) 3456-7890</p>
-                    `;
-                    list.appendChild(el);
-                });
-                container.innerHTML='';
-                container.appendChild(list);
-                return;
-            }
-        }
-
         // Formatar a data mínima para hoje
         document.addEventListener('DOMContentLoaded', function() {
             // Definir data mínima para hoje
@@ -762,7 +727,6 @@
             populateCabeleireiros();
             updateHeaderForUser();
             gerarHorarios();
-            renderAcompanhamento();
             
             // Formatar telefone
             const telefoneInput = document.getElementById('telefone');
@@ -793,6 +757,8 @@
                 
                 // Obter dados do formulário
                 const nome = document.getElementById('nome').value;
+                const telefone = document.getElementById('telefone').value;
+                const email = document.getElementById('email').value;
                 const servico = document.getElementById('servico').options[document.getElementById('servico').selectedIndex].text;
                 const data = document.getElementById('data').value;
                 const horario = horarioSelecionado.textContent;
@@ -807,11 +773,9 @@
                 // salvar appointment
                 const appt = { id: Date.now(), clientEmail: client.email, clientName: client.name, stylistEmail: stylistEmail, stylistName: stylistName, service: servico, date: data, time: horario };
                 saveAppointment(appt);
-                alert(`Agendamento confirmado!\n\nCliente: ${client.name}\nServiço: ${servico}\nData: ${dataFormatada}\nHorário: ${horario}\n\nEm breve entraremos em contato para confirmar.`);
-                // Limpar formulário
-                document.getElementById('form-agendamento').reset(); document.querySelectorAll('.horario-btn.selected').forEach(btn=>btn.classList.remove('selected'));
-                // Atualizar
-                setTimeout(function(){ gerarHorarios(); renderAcompanhamento(); }, 500);
+                localStorage.setItem('lastAppointment', JSON.stringify(appt)); // Salva o último agendamento para confirmação
+                // Redirecionar para confirmacao.html
+                window.location.href = 'confirmacao.html';
             });
             
             // Atualizar horários quando a data for alterada

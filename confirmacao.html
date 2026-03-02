@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmação de Agendamento</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(180deg, #FFD1DC 0%, #F8BBD0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .confirm-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(236,64,122,0.12);
+            padding: 2.5rem 2.5rem 2rem 2.5rem;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        .confirm-card h1 {
+            color: #EC407A;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        .confirm-card p {
+            color: #616161;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        #dadosAgendamento {
+            background: #F8BBD0;
+            border-radius: 10px;
+            padding: 1.2rem 1rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            color: #EC407A;
+            font-size: 1.08rem;
+            box-shadow: 0 2px 8px rgba(236,64,122,0.06);
+        }
+        #dadosAgendamento p {
+            margin: 0.5rem 0;
+            color: #EC407A;
+        }
+        .btn-voltar {
+            background: #EC407A;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background .3s;
+            box-shadow: 0 2px 8px rgba(236,64,122,0.08);
+        }
+        .btn-voltar:hover {
+            background: #F48FB1;
+        }
+        .icon-success {
+            font-size: 2.5rem;
+            color: #EC407A;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script>
+        // Recupera os dados do agendamento do localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const agendamento = JSON.parse(localStorage.getItem('lastAppointment')) || {};
+
+            // Exibe os dados na página
+            document.getElementById('dadosAgendamento').innerHTML = `
+                <p><strong>Nome:</strong> ${agendamento.clientName || ''}</p>
+                <p><strong>Serviço:</strong> ${agendamento.service || ''}</p>
+                <p><strong>Data:</strong> ${agendamento.date || ''}</p>
+                <p><strong>Horário:</strong> ${agendamento.time || ''}</p>
+                <p><strong>Telefone:</strong> ${agendamento.telefone || ''}</p>
+                <p><strong>Profissional:</strong> ${agendamento.stylistName || ''}</p>
+            `;
+        });
+
+        // Função para voltar para a agenda
+        function voltarParaAgenda() {
+            window.location.href = 'agenda.html';
+        }
+    </script>
+</head>
+<body>
+    <div class="confirm-card">
+        <div class="icon-success"><i class="fas fa-check-circle"></i></div>
+        <h1>Agendamento Confirmado!</h1>
+        <p>Sua solicitação foi recebida com sucesso.<br>Confira os dados abaixo:</p>
+        <div id="dadosAgendamento"></div>
+        <button class="btn-voltar" onclick="voltarParaAgenda()"><i class="fas fa-arrow-left"></i> Voltar para Agenda</button>
+    </div>
+</body>
+</html>
